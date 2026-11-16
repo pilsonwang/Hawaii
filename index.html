@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oahu Tropical Expedition (4D/3N)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Tropical Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Leaflet CSS for Google Maps Tile Outlay -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .glass-card {
+            background: rgba(15, 23, 42, 0.78);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+        }
+        .gradient-hero {
+            background: linear-gradient(180deg, rgba(2, 6, 23, 0.82) 0%, rgba(15, 23, 42, 0.96) 100%), url('https://placehold.co/1920x1080/064e3b/34d399?text=Oahu+Tropical+Expedition') center/cover no-repeat;
+        }
+        /* Custom Leaflet & Google Maps Outlay Styling */
+        #oahu-google-map {
+            height: 580px;
+            width: 100%;
+            z-index: 1;
+            border-radius: 1.25rem;
+        }
+        .leaflet-popup-content-wrapper {
+            background: rgba(15, 23, 42, 0.96) !important;
+            color: #f8fafc !important;
+            border: 1px solid rgba(245, 158, 11, 0.4) !important;
+            border-radius: 1rem !important;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.6) !important;
+            padding: 0 !important;
+        }
+        .leaflet-popup-content {
+            margin: 14px 16px !important;
+            font-family: 'Plus Jakarta Sans', sans-serif !important;
+        }
+        .leaflet-popup-tip {
+            background: rgba(15, 23, 42, 0.96) !important;
+        }
+        .leaflet-container a.leaflet-popup-close-button {
+            color: #94a3b8 !important;
+            top: 8px !important;
+            right: 8px !important;
+        }
+        .custom-pin {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 9999px;
+            font-weight: 800;
+            font-size: 12px;
+            color: #ffffff;
+            border: 2.5px solid #ffffff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+            transition: transform 0.2s ease;
+        }
+        .custom-pin:hover {
+            transform: scale(1.18);
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen selection:bg-amber-500 selection:text-white">
+
+    <!-- HERO SECTION -->
+    <header class="relative gradient-hero text-white py-12 px-4 sm:px-6 lg:px-8 border-b border-white/10 overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-r from-teal-500/15 via-amber-500/10 to-rose-500/10 pointer-events-none"></div>
+        <div class="max-w-7xl mx-auto relative z-10">
+            <div class="flex flex-wrap items-center justify-between gap-4 mb-5">
+                <div class="flex flex-wrap items-center gap-2.5">
+                    <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                        <i class="fa-solid fa-car-side"></i> Nov 22–25 &bull; Rental Car: Nov 23 & 24
+                    </span>
+                    <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                        <i class="fa-solid fa-truck-monster"></i> Nov 24 @ 3:00 PM: Kualoa UTV Tour
+                    </span>
+                    <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-teal-500/20 text-teal-300 border border-teal-500/30">
+                        <i class="fa-solid fa-water"></i> Ocean: 78°F–79°F (vs 63°F SoCal)
+                    </span>
+                </div>
+                <div class="flex items-center gap-2.5">
+                    <button onclick="toggleTipsDrawer()" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 border border-rose-500/40 transition-all cursor-pointer">
+                        <i class="fa-solid fa-compass"></i> Nov Snorkel & Travel Tips
+                    </button>
+                    <button onclick="openApiModal()" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-600/60 transition-all cursor-pointer">
+                        <i class="fa-brands fa-google text-amber-400"></i> Google Maps API Key
+                    </button>
+                </div>
+            </div>
+            
+            <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+                <div>
+                    <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight mb-3 bg-gradient-to-r from-amber-200 via-orange-300 to-rose-400 bg-clip-text text-transparent">
+                        Oahu Tropical Expedition &bull; Google Maps Outlay
+                    </h1>
+                    <p class="text-base sm:text-lg text-slate-300 max-w-3xl font-light">
+                        Interactive 4-Day / 3-Night island route map with Google Maps street, hybrid satellite, and terrain layers, numbered day pins, and curated local food stops.
+                    </p>
+                </div>
+                <!-- Launch Multi-Stop Route CTA -->
+                <div class="flex-shrink-0">
+                    <a id="launch-day-route-btn" href="https://www.google.com/maps/dir/Waikiki+Beach,+Honolulu,+HI/Ono+Seafood,+Kapahulu+Ave,+Honolulu,+HI/Leonard's+Bakery,+Kapahulu+Ave,+Honolulu,+HI" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2.5 px-5 py-3 rounded-2xl text-sm font-extrabold bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 shadow-lg shadow-orange-500/25 transition-all">
+                        <i class="fa-solid fa-diamond-turn-right text-base"></i>
+                        <span id="launch-day-route-text">Launch Full Trip in Google Maps</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTAINER -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
+
+        <!-- SECTION 1: PRIMARY GOOGLE MAPS INTERACTIVE OUTLAY -->
+        <section aria-labelledby="map-section-title" class="space-y-4">
+            <!-- Top Map Controls Bar -->
+            <div class="glass-card p-4 rounded-2xl flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+                <!-- Day Filter Pills -->
+                <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Filter route by day">
+                    <button onclick="selectRouteFilter('all')" id="route-btn-all" class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all bg-amber-500 text-slate-950 shadow-md cursor-pointer">
+                        <i class="fa-solid fa-map mr-1"></i> All Days (Nov 22–25)
+                    </button>
+                    <button onclick="selectRouteFilter(1)" id="route-btn-1" class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all bg-slate-900/90 text-slate-300 border border-slate-700 hover:border-amber-400 cursor-pointer">
+                        <span class="inline-block w-2 h-2 rounded-full bg-amber-400 mr-1.5"></span>Nov 22: Waikiki
+                    </button>
+                    <button onclick="selectRouteFilter(2)" id="route-btn-2" class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all bg-slate-900/90 text-slate-300 border border-slate-700 hover:border-rose-400 cursor-pointer">
+                        <span class="inline-block w-2 h-2 rounded-full bg-rose-500 mr-1.5"></span>Nov 23: West & North (Car)
+                    </button>
+                    <button onclick="selectRouteFilter(3)" id="route-btn-3" class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all bg-slate-900/90 text-slate-300 border border-slate-700 hover:border-emerald-400 cursor-pointer">
+                        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 mr-1.5"></span>Nov 24: Windward & Kualoa UTV (Car)
+                    </button>
+                    <button onclick="selectRouteFilter(4)" id="route-btn-4" class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all bg-slate-900/90 text-slate-300 border border-slate-700 hover:border-sky-400 cursor-pointer">
+                        <span class="inline-block w-2 h-2 rounded-full bg-sky-400 mr-1.5"></span>Nov 25: Diamond Head
+                    </button>
+                </div>
+
+                <!-- Map Layer Switcher & Food Toggle -->
+                <div class="flex flex-wrap items-center gap-2">
+                    <button onclick="toggleFoodPins()" id="toggle-food-btn" class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all bg-orange-500/20 text-orange-300 border border-orange-500/40 hover:bg-orange-500/30 cursor-pointer">
+                        <i class="fa-solid fa-utensils mr-1.5"></i> Food Pins: ON
+                    </button>
+                    <div class="inline-flex rounded-xl bg-slate-900 p-1 border border-slate-700">
+                        <button onclick="switchGoogleLayer('roadmap')" id="layer-roadmap" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-teal-500 text-slate-950 transition-all cursor-pointer">
+                            Google Roadmap
+                        </button>
+                        <button onclick="switchGoogleLayer('hybrid')" id="layer-hybrid" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-300 hover:text-white transition-all cursor-pointer">
+                            Hybrid Satellite
+                        </button>
+                        <button onclick="switchGoogleLayer('terrain')" id="layer-terrain" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-300 hover:text-white transition-all cursor-pointer">
+                            Terrain
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interactive Map + Side Itinerary Inspector Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                <!-- Google Maps Canvas (8 Cols) -->
+                <div class="lg:col-span-8 relative rounded-3xl overflow-hidden border border-white/15 shadow-2xl bg-slate-900">
+                    <div id="oahu-google-map"></div>
+                    <div id="official-gmaps-canvas" class="hidden h-[580px] w-full"></div>
+
+                    <!-- Floating Legend Overlay -->
+                    <div class="absolute bottom-4 left-4 z-[400] glass-card px-3.5 py-2.5 rounded-xl text-[11px] text-slate-200 flex flex-wrap items-center gap-3 pointer-events-auto">
+                        <span class="font-bold text-amber-300"><i class="fa-brands fa-google mr-1"></i> Google Maps Outlay</span>
+                        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span> D1</span>
+                        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> D2</span>
+                        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span> D3</span>
+                        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-sky-400"></span> D4</span>
+                        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span> Food</span>
+                    </div>
+                </div>
+
+                <!-- Interactive Itinerary Stop Inspector (4 Cols) -->
+                <div class="lg:col-span-4 glass-card rounded-3xl p-5 border border-white/15 flex flex-col justify-between h-[580px]">
+                    <div class="border-b border-white/10 pb-3.5 mb-3.5 flex items-center justify-between">
+                        <div>
+                            <span id="inspector-badge" class="text-[11px] font-bold uppercase tracking-wider text-amber-400 block">4-Day Master Route</span>
+                            <h2 id="inspector-title" class="text-lg font-extrabold text-white">All Expedition Stops</h2>
+                        </div>
+                        <a id="inspector-dir-link" href="https://www.google.com/maps/dir/Waikiki+Beach,+Honolulu,+HI/Electric+Beach,+Kapolei,+HI/Haleiwa,+HI/Hanauma+Bay,+Honolulu,+HI/Kailua+Beach,+Kailua,+HI" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-xl bg-teal-500/20 hover:bg-teal-500/30 text-teal-300 border border-teal-500/40 text-xs font-bold transition-all">
+                            <i class="fa-solid fa-route mr-1"></i> Directions
+                        </a>
+                    </div>
+
+                    <!-- Scrollable Stop Cards -->
+                    <div id="itinerary-stops-list" class="space-y-2.5 overflow-y-auto pr-1 flex-grow">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: CURATED OAHU FOOD SPOTS DIRECTORY -->
+        <section aria-labelledby="food-section-title" class="space-y-6">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div>
+                    <span class="text-orange-400 text-xs font-bold uppercase tracking-widest block mb-1">Pinned on Google Maps Outlay</span>
+                    <h2 id="food-section-title" class="text-2xl sm:text-3xl font-extrabold text-white">Curated Oahu Food Spots Directory</h2>
+                </div>
+                
+                <!-- Food Category Filters -->
+                <div class="flex flex-wrap gap-2" role="group" aria-label="Food category filters">
+                    <button onclick="filterFood('all')" id="filter-all" class="px-4 py-1.5 rounded-full text-xs font-bold transition-all bg-amber-500 text-slate-950 cursor-pointer">All Spots (10)</button>
+                    <button onclick="filterFood('Poke')" id="filter-Poke" class="px-4 py-1.5 rounded-full text-xs font-bold transition-all bg-slate-900 text-slate-300 border border-slate-800 hover:bg-slate-800 cursor-pointer">Poke</button>
+                    <button onclick="filterFood('Plate Lunch')" id="filter-Plate Lunch" class="px-4 py-1.5 rounded-full text-xs font-bold transition-all bg-slate-900 text-slate-300 border border-slate-800 hover:bg-slate-800 cursor-pointer">Plate Lunch</button>
+                    <button onclick="filterFood('Shave Ice & Malasadas')" id="filter-Shave Ice & Malasadas" class="px-4 py-1.5 rounded-full text-xs font-bold transition-all bg-slate-900 text-slate-300 border border-slate-800 hover:bg-slate-800 cursor-pointer">Shave Ice & Malasadas</button>
+                    <button onclick="filterFood('Local Favorites')" id="filter-Local Favorites" class="px-4 py-1.5 rounded-full text-xs font-bold transition-all bg-slate-900 text-slate-300 border border-slate-800 hover:bg-slate-800 cursor-pointer">Local Favorites</button>
+                </div>
+            </div>
+
+            <!-- Food Cards Grid -->
+            <div id="food-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <!-- Populated dynamically via JS -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- SLIDE-OVER DRAWER: LATE NOVEMBER SNORKELING & TRAVEL TIPS -->
+    <div id="tips-drawer" class="fixed inset-0 z-[1000] hidden">
+        <div class="absolute inset-0 bg-slate-950/75 backdrop-blur-sm" onclick="toggleTipsDrawer()"></div>
+        <aside class="absolute right-0 top-0 bottom-0 w-full max-w-md bg-slate-900 border-l border-amber-500/30 p-6 sm:p-8 overflow-y-auto shadow-2xl flex flex-col justify-between">
+            <div class="space-y-6">
+                <div class="flex items-center justify-between border-b border-white/10 pb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-lg">
+                            <i class="fa-solid fa-umbrella-beach"></i>
+                        </div>
+                        <div>
+                            <span class="text-[11px] font-bold uppercase tracking-wider text-amber-400 block">Late November Guide</span>
+                    <div class="p-4 rounded-2xl bg-emerald-950/50 border border-emerald-500/30">
+                        <h4 class="font-bold text-emerald-300 text-sm mb-1.5 flex items-center gap-2">
+                            <i class="fa-solid fa-truck-monster"></i> Nov 24 Kualoa Ranch UTV Check-In (2:15 PM)
+                        </h4>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            Kualoa Ranch strictly requires arrival <strong>45 minutes prior</strong> (by <strong>2:15 PM</strong>) for your 3:00 PM UTV Raptor Tour for waivers, helmets, and safety orientation. Closed-toe shoes are mandatory, and expect red Ka'a'awa Valley dust!
+                        </p>
+                    </div>
+
+                    <div class="p-4 rounded-2xl bg-amber-950/50 border border-amber-500/30">
+                        <h4 class="font-bold text-amber-300 text-sm mb-1.5 flex items-center gap-2">
+                            <i class="fa-solid fa-calendar-check"></i> Hanauma Bay 48-Hr Reservation Rule
+                        </h4>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            For your Nov 24 morning snorkel, book online via Honolulu Parks & Recreation on <strong>Nov 22 at 7:00 AM HST sharp</strong> (tickets sell out in under 5 minutes). Note: Tuesday Nov 24 is open!
+                        </p>
+                    </div>
+
+                    <div class="p-4 rounded-2xl bg-rose-950/50 border border-rose-500/30">
+                        <h4 class="font-bold text-rose-300 text-sm mb-1.5 flex items-center gap-2">
+                            <i class="fa-solid fa-triangle-exclamation"></i> North Shore Winter Swell Advisory
+                        </h4>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            Late November brings massive North Pacific winter swells. Skip snorkeling at Shark's Cove or Three Tables (watch surfers there instead!) and focus snorkeling on protected South (Hanauma Bay) and Leeward (Electric Beach) shores.
+                        </p>
+                    </div>
+
+                    <div class="p-4 rounded-2xl bg-amber-950/50 border border-amber-500/30">
+                        <h4 class="font-bold text-amber-300 text-sm mb-1.5 flex items-center gap-2">
+                            <i class="fa-solid fa-calendar-check"></i> Hanauma Bay 48-Hr Reservation Rule
+                        </h4>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            Tickets release online via Honolulu Parks & Recreation exactly 48 hours in advance at <strong>7:00 AM HST</strong> and sell out in under 5 minutes. Closed Mondays & Tuesdays.
+                        </p>
+                    </div>
+
+                    <div class="p-4 rounded-2xl bg-slate-800/80 border border-slate-700">
+                        <h4 class="font-bold text-sky-300 text-sm mb-1.5 flex items-center gap-2">
+                            <i class="fa-solid fa-square-parking"></i> Rental Car & Parking Strategy
+                        </h4>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            Keeping your rental strictly to Days 2 & 3 avoids $45–$55/night Waikiki resort valet fees on Nights 1 & 3, while giving you full freedom for West/North and Windward loops.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="toggleTipsDrawer()" class="mt-6 w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-sm transition-all cursor-pointer">
+                Back to Google Maps Outlay
+            </button>
+        </aside>
+    </div>
+
+    <!-- OPTIONAL OFFICIAL GOOGLE MAPS JS API KEY MODAL -->
+    <div id="api-modal" class="fixed inset-0 z-[1000] hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onclick="closeApiModal()"></div>
+        <div class="relative z-10 w-full max-w-md glass-card bg-slate-900 rounded-3xl p-6 border border-white/15 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-extrabold text-white flex items-center gap-2">
+                    <i class="fa-brands fa-google text-amber-400"></i> Official Google Maps JS API
+                </h3>
+                <button onclick="closeApiModal()" class="text-slate-400 hover:text-white cursor-pointer">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed">
+                The map already renders authentic Google Maps Roadmap, Hybrid Satellite, and Terrain layers out-of-the-box without a key. If you have your own Google Maps Platform API key, paste it below to switch to the native Google Maps JS SDK:
+            </p>
+            <input id="gmaps-api-key-input" type="text" placeholder="AIzaSy..." class="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-sm text-white focus:outline-none focus:border-amber-400" />
+            <div id="api-status-msg" class="text-xs text-amber-300 hidden"></div>
+            <div class="flex items-center justify-end gap-2 pt-2">
+                <button onclick="closeApiModal()" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 cursor-pointer">Cancel</button>
+                <button onclick="loadOfficialGoogleMapsApi()" class="px-4 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 cursor-pointer">Load Official SDK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-slate-900 bg-slate-950 py-10 mt-12 text-center text-slate-500 text-xs">
+        <div class="max-w-7xl mx-auto px-4 space-y-2">
+            <div class="text-amber-400 font-bold text-sm">
+                <i class="fa-solid fa-plane-departure mr-1"></i> Oahu Tropical Expedition &bull; Google Maps Outlay
+            </div>
+            <p>Interactive 4D/3N Oahu Snorkel & Food Map. Click any pin or card to launch turn-by-turn Google Maps navigation.</p>
+        </div>
+    </footer>
+
+    <!-- LEAFLET JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+
+    <!-- INTERACTIVE MAP & DATA SCRIPT -->
+    <script>
+        // 1. ITINERARY STOPS WITH EXACT COORDINATES (NOV 22–25)
+        const itineraryStops = [
+            // DAY 1 (NOV 22): Waikiki Arrival (No Car)
+            {
+                id: "d1-1", day: 1, num: 1, color: "#fbbf24",
+                name: "Waikiki Beach & Duke Kahanamoku Statue",
+                time: "Nov 22 (Day 1) • Afternoon",
+                lat: 21.2766, lng: -157.8268,
+                desc: "Arrive, check into your Waikiki hotel, and take a sunset stroll along the palm-lined shoreline.",
+                tip: "No car needed today—everything in Waikiki and Kapahulu is walkable or a 5-min rideshare."
+            },
+            {
+                id: "d1-2", day: 1, num: 2, color: "#fbbf24",
+                name: "Kapahulu Ave Food Crawl (Ono Seafood & Leonard's)",
+                time: "Nov 22 (Day 1) • Evening",
+                lat: 21.2804, lng: -157.8143,
+                desc: "Kick off your trip with fresh Hawaiian-style Ahi Poke at Ono Seafood followed by hot malasadas at Leonard's.",
+                tip: "Grab malasadas warm right out of the fryer; cash or card accepted."
+            },
+            // DAY 2 (NOV 23): Leeward & North Shore Loop (Rental Car Day 1)
+            {
+                id: "d2-1", day: 2, num: 1, color: "#f43f5e",
+                name: "Tanioka's Seafoods & Catering (Waipahu)",
+                time: "Nov 23 (Day 2) • 09:00 AM (Car)",
+                lat: 21.3849, lng: -158.0094,
+                desc: "Pick up your rental car early and grab spicy ahi poke bowls and musubi en route to the Leeward coast.",
+                tip: "Ideal grab-and-go picnic lunch before hitting the beach."
+            },
+            {
+                id: "d2-2", day: 2, num: 2, color: "#f43f5e",
+                name: "Electric Beach / Kahe Point Snorkel",
+                time: "Nov 23 (Day 2) • 10:15 AM (Car)",
+                lat: 21.3536, lng: -158.1306,
+                desc: "Swim out to the warm-water outflow pipes where huge schools of reef fish, rays, and sea turtles gather.",
+                tip: "Enter from the sandy cove on the right; skip if a rare west swell is churning."
+            },
+            {
+                id: "d2-3", day: 2, num: 3, color: "#f43f5e",
+                name: "Haleiwa Town (Matsumoto Shave Ice & Kono's)",
+                time: "Nov 23 (Day 2) • 01:30 PM (Car)",
+                lat: 21.5928, lng: -158.1033,
+                desc: "Cruise up the central valley to historic Haleiwa for kalua pork bombers and rainbow shave ice.",
+                tip: "Late Nov surf on the North Shore is big—great for watching pro surfers at Sunset or Waimea!"
+            },
+            {
+                id: "d2-4", day: 2, num: 4, color: "#f43f5e",
+                name: "Tantalus Lookout (Puu Ualakaa State Park)",
+                time: "Nov 23 (Day 2) • 05:15 PM Sunset (Car)",
+                lat: 21.3148, lng: -157.8219,
+                desc: "Sweep above Honolulu at dusk for panoramic views stretching from Diamond Head to Pearl Harbor.",
+                tip: "Gate closes at 6:45 PM in winter—arrive 30 mins before sunset."
+            },
+            // DAY 3 (NOV 24): Hanauma Bay, Windward Coast & 3:00 PM Kualoa UTV Tour (Rental Car Day 2)
+            {
+                id: "d3-1", day: 3, num: 1, color: "#34d399",
+                name: "Hanauma Bay Nature Preserve",
+                time: "Nov 24 (Day 3) • 07:30 AM (Car)",
+                lat: 21.2690, lng: -157.6938,
+                desc: "Early morning snorkel session in the protected volcanic crater bay with calm, crystal-clear water and dense coral reefs.",
+                tip: "Book tickets on Nov 22 at 7:00 AM HST sharp. Wrap up by 10:00 AM to stay on schedule for Kualoa."
+            },
+            {
+                id: "d3-2", day: 3, num: 2, color: "#34d399",
+                name: "Makapu'u Point Lookout & Halona Blowhole",
+                time: "Nov 24 (Day 3) • 10:15 AM (Car)",
+                lat: 21.3106, lng: -157.6586,
+                desc: "Scenic coastal cliff viewpoints heading north along Kalanianaole Hwy (Route 72) overlooking Rabbit Island and turquoise coves.",
+                tip: "Keep an eye on the horizon—early humpback whales start arriving in late November!"
+            },
+            {
+                id: "d3-3", day: 3, num: 3, color: "#34d399",
+                name: "Kailua Beach & Windward Lunch Stop",
+                time: "Nov 24 (Day 3) • 11:30 AM (Car)",
+                lat: 21.3974, lng: -157.7269,
+                desc: "Quick stroll on powder-soft Kailua sand followed by lunch at Kalapawai Cafe or Adela's Country Eatery in Kaneohe.",
+                tip: "Depart lunch by 1:00 PM to stay right on track for Byodo-In Temple and Kualoa check-in."
+            },
+            {
+                id: "d3-4", day: 3, num: 4, color: "#34d399",
+                name: "Byodo-In Temple (Valley of the Temples)",
+                time: "Nov 24 (Day 3) • 01:15 PM (Car)",
+                lat: 21.4308, lng: -157.8318,
+                desc: "Positioned right on the route north in Kaneohe—enjoy a peaceful 35-minute visit beneath the emerald Ko'olau cliffs.",
+                tip: "Leave Byodo-In by 1:55 PM for the quick 15-minute drive north up Kamehameha Hwy to Kualoa Ranch."
+            },
+            {
+                id: "d3-5", day: 3, num: 5, color: "#34d399",
+                name: "Kualoa Ranch • 3:00 PM UTV Raptor Tour",
+                time: "Nov 24 (Day 3) • 02:15 PM Check-In (Car)",
+                lat: 21.5213, lng: -157.8373,
+                desc: "Mandatory 2:15 PM check-in (45 mins early) for your 2-hour 3:00 PM – 5:00 PM off-road UTV Raptor adventure through Ka'a'awa Valley.",
+                tip: "Closed-toe shoes required! Stop 5 mins south at Waiahole Poi Factory after 5:00 PM for fresh kulolo before taking H-3 back to Waikiki."
+            },
+            // DAY 4 (NOV 25): Diamond Head & Departure (No Car)
+            {
+                id: "d4-1", day: 4, num: 1, color: "#38bdf8",
+                name: "Diamond Head Crater Hike & Monsarrat Ave",
+                time: "Nov 25 (Day 4) • Morning",
+                lat: 21.2620, lng: -157.8060,
+                desc: "Morning summit hike overlooking the entire Waikiki coastline, followed by Garlic Ahi plates at Pioneer Saloon.",
+                tip: "Book out-of-state hiker reservation online in advance; quick 10-min Uber from Waikiki."
+            },
+            {
+                id: "d4-2", day: 4, num: 2, color: "#38bdf8",
+                name: "Honolulu International Airport (HNL) Departure",
+                time: "Nov 25 (Day 4) • Afternoon",
+                lat: 21.3245, lng: -157.9251,
+                desc: "Final souvenir pickup in Waikiki before heading west to HNL for your flight home.",
+                tip: "Allow extra time for agricultural bag inspection at HNL."
+            }
+        ];
+
+        // 2. CURATED OAHU FOOD SPOTS DIRECTORY (10 SPOTS)
+        const foodSpots = [
+            {
+                id: "food-ono",
+                name: "Ono Seafood",
+                category: "Poke",
+                area: "Kapahulu (Nov 22 • Day 1)",
+                lat: 21.2804, lng: -157.8143,
+                dish: "Shoyu Ahi & Spicy Ahi Poke Bowl",
+                desc: "Legendary hole-in-the-wall counter serving never-frozen Hawaiian ahi marinated to order over warm rice.",
+                image: "https://placehold.co/600x360/0f172a/fbbf24?text=Ono+Seafood+Poke"
+            },
+            {
+                id: "food-leonards",
+                name: "Leonard's Bakery",
+                category: "Shave Ice & Malasadas",
+                area: "Kapahulu (Nov 22 • Day 1)",
+                lat: 21.2852, lng: -157.8132,
+                dish: "Original Sugar & Haupia Puff Malasadas",
+                desc: "Iconic 1952 bakery famous for pillowy Portuguese doughnuts rolled in sugar and served piping hot.",
+                image: "https://placehold.co/600x360/0f172a/fb7185?text=Leonards+Bakery+Malasadas"
+            },
+            {
+                id: "food-rainbow",
+                name: "Rainbow Drive-In",
+                category: "Plate Lunch",
+                area: "Kapahulu (Nov 22 • Day 1)",
+                lat: 21.2762, lng: -157.8146,
+                dish: "Loco Moco & Mix Plate",
+                desc: "Classic 1961 Hawaiian plate lunch institution serving two scoops rice, mac salad, and rich brown gravy.",
+                image: "https://placehold.co/600x360/0f172a/34d399?text=Rainbow+Drive-In"
+            },
+            {
+                id: "food-pioneer",
+                name: "Pioneer Saloon",
+                category: "Plate Lunch",
+                area: "Monsarrat Ave (Nov 25 • Day 4)",
+                lat: 21.2695, lng: -157.8159,
+                dish: "Garlic Ahi Steak & Mochiko Chicken",
+                desc: "Beloved post-Diamond Head spot right at the base of the crater serving seared garlic ahi and crispy chicken.",
+                image: "https://placehold.co/600x360/0f172a/38bdf8?text=Pioneer+Saloon"
+            },
+            {
+                id: "food-taniokas",
+                name: "Tanioka's Seafoods & Catering",
+                category: "Poke",
+                area: "Waipahu (Nov 23 • Day 2 En Route)",
+                lat: 21.3849, lng: -158.0094,
+                dish: "Spicy Ahi Patties & Limu Kohu Poke",
+                desc: "Local favorite along the route to Electric Beach—famous for poke bowls, spam musubi, and crispy ahi patties.",
+                image: "https://placehold.co/600x360/0f172a/fbbf24?text=Taniokas+Seafoods"
+            },
+            {
+                id: "food-matsumoto",
+                name: "Matsumoto Shave Ice",
+                category: "Shave Ice & Malasadas",
+                area: "Haleiwa (Nov 23 • Day 2)",
+                lat: 21.5928, lng: -158.1033,
+                dish: "Rainbow Shave Ice w/ Ice Cream & Snow Cap",
+                desc: "North Shore landmark since 1951 shaving ultra-fine ice topped with tropical syrups and condensed milk.",
+                image: "https://placehold.co/600x360/0f172a/fb7185?text=Matsumoto+Shave+Ice"
+            },
+            {
+                id: "food-konos",
+                name: "Kono's Northshore",
+                category: "Local Favorites",
+                area: "Haleiwa (Nov 23 • Day 2)",
+                lat: 21.5914, lng: -158.1036,
+                dish: "12-Hour Slow-Roasted Kalua Pork Bombers",
+                desc: "Juicy, smoky kalua pork rolled into warm breakfast burritos and sliders right in historic Haleiwa.",
+                image: "https://placehold.co/600x360/0f172a/f97316?text=Konos+Northshore"
+            },
+            {
+                id: "food-waiahole",
+                name: "Waiahole Poi Factory",
+                category: "Local Favorites",
+                area: "5 Mins South of Kualoa (Nov 24 • Post-UTV)",
+                lat: 21.4828, lng: -157.8442,
+                dish: "Kalua Pig, Poi & Sweet Lady of Waiahole",
+                desc: "Ideal post-UTV tour treat just 5 minutes south of Kualoa Ranch—famous for warm kulolo topped with haupia ice cream.",
+                image: "https://placehold.co/600x360/0f172a/34d399?text=Waiahole+Poi+Factory"
+            },
+            {
+                id: "food-adelas",
+                name: "Adela's Country Eatery",
+                category: "Local Favorites",
+                area: "Kaneohe (Nov 24 • Pre-Kualoa Lunch)",
+                lat: 21.4119, lng: -157.8012,
+                dish: "Taro & Ube Pasta with Crispy Lechon",
+                desc: "Right along your Windward route in Kaneohe—house-made local taro and ube noodles topped with crispy pork.",
+                image: "https://placehold.co/600x360/0f172a/a855f7?text=Adelas+Country+Eatery"
+            },
+            {
+                id: "food-kalapawai",
+                name: "Kalapawai Cafe & Deli",
+                category: "Local Favorites",
+                area: "Kailua (Nov 24 • Pre-Kualoa Lunch)",
+                lat: 21.3941, lng: -157.7418,
+                dish: "Post-Beach Deli Sandwiches & Iced Latte",
+                desc: "Charming Kailua town cafe ideal for refueling after Hanauma Bay before heading north to Byodo-In and Kualoa.",
+                image: "https://placehold.co/600x360/0f172a/38bdf8?text=Kalapawai+Cafe"
+            }
+        ];
+
+        // Multi-stop Google Maps Route URLs per day
+        const dayGoogleMapsUrls = {
+            all: "https://www.google.com/maps/dir/Waikiki+Beach,+Honolulu,+HI/Electric+Beach,+Kapolei,+HI/Haleiwa,+HI/Hanauma+Bay,+Honolulu,+HI/Byodo-In+Temple,+Kaneohe,+HI/Kualoa+Ranch,+Kaneohe,+HI/Diamond+Head+State+Monument,+Honolulu,+HI",
+            1: "https://www.google.com/maps/dir/Waikiki+Beach,+Honolulu,+HI/Ono+Seafood,+Kapahulu+Ave,+Honolulu,+HI/Leonard's+Bakery,+Kapahulu+Ave,+Honolulu,+HI/Rainbow+Drive-In,+Kapahulu+Ave,+Honolulu,+HI",
+            2: "https://www.google.com/maps/dir/Waikiki+Beach,+Honolulu,+HI/Tanioka's+Seafoods+%26+Catering,+Waipahu,+HI/Electric+Beach,+Kapolei,+HI/Matsumoto+Shave+Ice,+Haleiwa,+HI/Puu+Ualakaa+State+Park,+Honolulu,+HI",
+            3: "https://www.google.com/maps/dir/Waikiki+Beach,+Honolulu,+HI/Hanauma+Bay,+Honolulu,+HI/Makapuu+Lookout,+Waimanalo,+HI/Kailua+Beach,+Kailua,+HI/Byodo-In+Temple,+Kaneohe,+HI/Kualoa+Ranch,+Kaneohe,+HI/Waiahole+Poi+Factory,+Kaneohe,+HI",
+            4: "https://www.google.com/maps/dir/Waikiki+Beach,+Honolulu,+HI/Diamond+Head+State+Monument,+Honolulu,+HI/Pioneer+Saloon,+Monsarrat+Ave,+Honolulu,+HI/Daniel+K.+Inouye+International+Airport,+Honolulu,+HI"
+        };
+
+        // 3. GOOGLE MAPS TILE OUTLAY SETUP
+        let map;
+        let currentTileLayer;
+        let activeDayFilter = 'all';
+        let showFoodMarkers = true;
+        let routeLayerGroup;
+        let foodLayerGroup;
+        const markerRegistry = {};
+
+        const googleTileUrls = {
+            roadmap: 'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
+            hybrid: 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
+            terrain: 'https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}'
+        };
+
+        function initMapOutlay() {
+            map = L.map('oahu-google-map', {
+                center: [21.4389, -157.9583],
+                zoom: 10,
+                zoomControl: true
+            });
+
+            currentTileLayer = L.tileLayer(googleTileUrls.roadmap, {
+                maxZoom: 20,
+                attribution: '&copy; Google Maps'
+            }).addTo(map);
+
+            routeLayerGroup = L.layerGroup().addTo(map);
+            foodLayerGroup = L.layerGroup().addTo(map);
+
+            renderMapOverlays();
+            renderInspectorList();
+            renderFoodDirectory('all');
+        }
+
+        function switchGoogleLayer(type) {
+            if (currentTileLayer) {
+                map.removeLayer(currentTileLayer);
+            }
+            currentTileLayer = L.tileLayer(googleTileUrls[type], {
+                maxZoom: 20,
+                attribution: '&copy; Google Maps'
+            }).addTo(map);
+
+            ['roadmap', 'hybrid', 'terrain'].forEach(t => {
+                const btn = document.getElementById(`layer-${t}`);
+                if (t === type) {
+                    btn.className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-teal-500 text-slate-950 transition-all cursor-pointer";
+                } else {
+                    btn.className = "px-3 py-1.5 rounded-lg text-xs font-bold text-slate-300 hover:text-white transition-all cursor-pointer";
+                }
+            });
+        }
+
+        function createGoogleMapsSearchUrl(name, lat, lng) {
+            return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name + ' Oahu HI')}`;
+        }
+
+        function renderMapOverlays() {
+            routeLayerGroup.clearLayers();
+            foodLayerGroup.clearLayers();
+
+            const daysToRender = activeDayFilter === 'all' ? [1, 2, 3, 4] : [activeDayFilter];
+            const boundsCoords = [];
+
+            daysToRender.forEach(dayNum => {
+                const stops = itineraryStops.filter(s => s.day === dayNum);
+                const latLngs = stops.map(s => [s.lat, s.lng]);
+                const lineColor = stops[0]?.color || '#fbbf24';
+
+                // Draw route polyline
+                if (latLngs.length > 1) {
+                    L.polyline(latLngs, {
+                        color: lineColor,
+                        weight: 4,
+                        opacity: 0.85,
+                        dashArray: dayNum === 1 || dayNum === 4 ? '6, 8' : null
+                    }).addTo(routeLayerGroup);
+                }
+
+                // Place numbered pins
+                stops.forEach(stop => {
+                    boundsCoords.push([stop.lat, stop.lng]);
+                    const icon = L.divIcon({
+                        className: '',
+                        html: `<div class="custom-pin" style="background:${stop.color}; width:30px; height:30px; color:#0f172a;">D${stop.day}-${stop.num}</div>`,
+                        iconSize: [30, 30],
+                        iconAnchor: [15, 15]
+                    });
+
+                    const gmapsUrl = createGoogleMapsSearchUrl(stop.name, stop.lat, stop.lng);
+                    const popupHtml = `
+                        <div class="space-y-2 max-w-[240px]">
+                            <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-amber-500/20 text-amber-300">
+                                ${stop.time}
+                            </span>
+                            <h4 class="font-extrabold text-sm text-white leading-snug">${stop.name}</h4>
+                            <p class="text-xs text-slate-300 leading-relaxed">${stop.desc}</p>
+                            <div class="p-2 rounded-lg bg-slate-900/90 border border-slate-700 text-[11px] text-teal-300">
+                                <strong>Tip:</strong> ${stop.tip}
+                            </div>
+                            <a href="${gmapsUrl}" target="_blank" rel="noopener noreferrer" class="mt-1 w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs transition-all">
+                                <i class="fa-brands fa-google"></i> Open in Google Maps
+                            </a>
+                        </div>
+                    `;
+
+                    const marker = L.marker([stop.lat, stop.lng], { icon })
+                        .bindPopup(popupHtml)
+                        .addTo(routeLayerGroup);
+                    markerRegistry[stop.id] = marker;
+                });
+            });
+
+            // Place Food Pins
+            if (showFoodMarkers) {
+                foodSpots.forEach(spot => {
+                    const icon = L.divIcon({
+                        className: '',
+                        html: `<div class="custom-pin" style="background:#f97316; width:26px; height:26px;"><i class="fa-solid fa-utensils text-[10px]"></i></div>`,
+                        iconSize: [26, 26],
+                        iconAnchor: [13, 13]
+                    });
+
+                    const gmapsUrl = createGoogleMapsSearchUrl(spot.name, spot.lat, spot.lng);
+                    const popupHtml = `
+                        <div class="space-y-2 max-w-[230px]">
+                            <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-orange-500/20 text-orange-300">
+                                ${spot.category} &bull; ${spot.area}
+                            </span>
+                            <h4 class="font-extrabold text-sm text-white">${spot.name}</h4>
+                            <p class="text-[11px] text-amber-300 font-semibold">Order: ${spot.dish}</p>
+                            <p class="text-xs text-slate-300 leading-relaxed">${spot.desc}</p>
+                            <a href="${gmapsUrl}" target="_blank" rel="noopener noreferrer" class="mt-1 w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-500 hover:bg-orange-400 text-slate-950 font-extrabold text-xs transition-all">
+                                <i class="fa-brands fa-google"></i> Open in Google Maps
+                            </a>
+                        </div>
+                    `;
+
+                    const marker = L.marker([spot.lat, spot.lng], { icon })
+                        .bindPopup(popupHtml)
+                        .addTo(foodLayerGroup);
+                    markerRegistry[spot.id] = marker;
+                });
+            }
+
+            if (boundsCoords.length > 0) {
+                map.fitBounds(boundsCoords, { padding: [45, 45], maxZoom: 13 });
+            }
+        }
+
+        function selectRouteFilter(dayFilter) {
+            activeDayFilter = dayFilter;
+
+            ['all', 1, 2, 3, 4].forEach(key => {
+                const btn = document.getElementById(`route-btn-${key}`);
+                if (key === dayFilter) {
+                    btn.className = "px-3.5 py-2 rounded-xl text-xs font-bold transition-all bg-amber-500 text-slate-950 shadow-md cursor-pointer";
+                } else {
+                    btn.className = "px-3.5 py-2 rounded-xl text-xs font-bold transition-all bg-slate-900/90 text-slate-300 border border-slate-700 hover:border-amber-400 cursor-pointer";
+                }
+            });
+
+            // Update Multi-Stop Launch URL
+            const launchBtn = document.getElementById('launch-day-route-btn');
+            const launchText = document.getElementById('launch-day-route-text');
+            const dirLink = document.getElementById('inspector-dir-link');
+            launchBtn.href = dayGoogleMapsUrls[dayFilter];
+            dirLink.href = dayGoogleMapsUrls[dayFilter];
+            launchText.textContent = dayFilter === 'all'
+                ? 'Launch Full Trip in Google Maps'
+                : `Launch Day ${dayFilter} Route in Google Maps`;
+
+            renderMapOverlays();
+            renderInspectorList();
+        }
+
+        function toggleFoodPins() {
+            showFoodMarkers = !showFoodMarkers;
+            const btn = document.getElementById('toggle-food-btn');
+            btn.innerHTML = `<i class="fa-solid fa-utensils mr-1.5"></i> Food Pins: ${showFoodMarkers ? 'ON' : 'OFF'}`;
+            btn.className = showFoodMarkers
+                ? "px-3.5 py-2 rounded-xl text-xs font-bold transition-all bg-orange-500/20 text-orange-300 border border-orange-500/40 hover:bg-orange-500/30 cursor-pointer"
+                : "px-3.5 py-2 rounded-xl text-xs font-bold transition-all bg-slate-900 text-slate-400 border border-slate-700 cursor-pointer";
+            renderMapOverlays();
+        }
+
+        function flyToMarker(id, lat, lng) {
+            const mapEl = document.getElementById('oahu-google-map');
+            mapEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            map.flyTo([lat, lng], 14, { duration: 1.1 });
+            setTimeout(() => {
+                if (markerRegistry[id]) {
+                    markerRegistry[id].openPopup();
+                }
+            }, 600);
+        }
+
+        function renderInspectorList() {
+            const listEl = document.getElementById('itinerary-stops-list');
+            const titleEl = document.getElementById('inspector-title');
+            const badgeEl = document.getElementById('inspector-badge');
+
+            const dayTitles = {
+                all: { badge: "Nov 22–25 Master Route", title: "All Expedition Stops (13)" },
+                1: { badge: "Nov 22 • No Car Needed", title: "Day 1: Waikiki Arrival" },
+                2: { badge: "Nov 23 • Rental Car Day 1", title: "Day 2: West & North Loop" },
+                3: { badge: "Nov 24 • Rental Car Day 2", title: "Day 3: Windward & 3PM Kualoa UTV" },
+                4: { badge: "Nov 25 • No Car Needed", title: "Day 4: Diamond Head & HNL" }
+            };
+
+            badgeEl.textContent = dayTitles[activeDayFilter].badge;
+            titleEl.textContent = dayTitles[activeDayFilter].title;
+
+            const filteredStops = activeDayFilter === 'all'
+                ? itineraryStops
+                : itineraryStops.filter(s => s.day === activeDayFilter);
+
+            listEl.innerHTML = filteredStops.map(stop => {
+                const gmapsUrl = createGoogleMapsSearchUrl(stop.name, stop.lat, stop.lng);
+                return `
+                    <div onclick="flyToMarker('${stop.id}', ${stop.lat}, ${stop.lng})" class="p-3.5 rounded-2xl bg-slate-900/85 hover:bg-slate-800/95 border border-slate-800 hover:border-amber-400/50 transition-all cursor-pointer group">
+                        <div class="flex items-start justify-between gap-2 mb-1">
+                            <span class="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider" style="color:${stop.color}">
+                                <span class="w-2 h-2 rounded-full" style="background:${stop.color}"></span>
+                                ${stop.time}
+                            </span>
+                            <a href="${gmapsUrl}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="text-[11px] font-bold text-slate-400 hover:text-amber-300 flex items-center gap-1">
+                                <i class="fa-brands fa-google"></i> Map
+                            </a>
+                        </div>
+                        <h4 class="text-sm font-bold text-white group-hover:text-amber-200 transition-colors">${stop.name}</h4>
+                        <p class="text-xs text-slate-400 mt-1 line-clamp-2">${stop.desc}</p>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderFoodDirectory(category) {
+            const categories = ['all', 'Poke', 'Plate Lunch', 'Shave Ice & Malasadas', 'Local Favorites'];
+            categories.forEach(cat => {
+                const btn = document.getElementById(`filter-${cat}`);
+                if (btn) {
+                    btn.className = cat === category
+                        ? "px-4 py-1.5 rounded-full text-xs font-bold transition-all bg-amber-500 text-slate-950 cursor-pointer"
+                        : "px-4 py-1.5 rounded-full text-xs font-bold transition-all bg-slate-900 text-slate-300 border border-slate-800 hover:bg-slate-800 cursor-pointer";
+                }
+            });
+
+            const grid = document.getElementById('food-grid');
+            const items = category === 'all' ? foodSpots : foodSpots.filter(f => f.category === category);
+
+            grid.innerHTML = items.map(spot => {
+                const gmapsUrl = createGoogleMapsSearchUrl(spot.name, spot.lat, spot.lng);
+                return `
+                    <div class="glass-card rounded-2xl overflow-hidden border border-white/10 hover:border-amber-500/40 transition-all flex flex-col justify-between group">
+                        <div>
+                            <div class="relative h-40 overflow-hidden bg-slate-900">
+                                <img src="${spot.image}" alt="${spot.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.src='https://placehold.co/600x360/0f172a/fbbf24?text=Oahu+Eats'">
+                                <span class="absolute top-3 right-3 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-slate-950/85 text-amber-300 border border-white/10">
+                                    ${spot.category}
+                                </span>
+                            </div>
+                            <div class="p-5">
+                                <span class="text-xs font-semibold text-teal-400 block mb-1">
+                                    <i class="fa-solid fa-location-dot mr-1"></i> ${spot.area}
+                                </span>
+                                <h3 class="text-lg font-extrabold text-white mb-1">${spot.name}</h3>
+                                <p class="text-xs font-bold text-amber-300 mb-2">Must-Order: ${spot.dish}</p>
+                                <p class="text-xs text-slate-300 leading-relaxed">${spot.desc}</p>
+                            </div>
+                        </div>
+                        <div class="px-5 pb-5 pt-2 flex items-center gap-2">
+                            <button onclick="flyToMarker('${spot.id}', ${spot.lat}, ${spot.lng})" class="flex-1 py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition-all cursor-pointer">
+                                <i class="fa-solid fa-crosshairs text-amber-400 mr-1"></i> Pin on Map
+                            </button>
+                            <a href="${gmapsUrl}" target="_blank" rel="noopener noreferrer" class="flex-1 py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-extrabold text-center transition-all">
+                                <i class="fa-brands fa-google mr-1"></i> Open Maps
+                            </a>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterFood(category) {
+            renderFoodDirectory(category);
+        }
+
+        function toggleTipsDrawer() {
+            const drawer = document.getElementById('tips-drawer');
+            drawer.classList.toggle('hidden');
+        }
+
+        function openApiModal() {
+            document.getElementById('api-modal').classList.remove('hidden');
+        }
+
+        function closeApiModal() {
+            document.getElementById('api-modal').classList.add('hidden');
+        }
+
+        function loadOfficialGoogleMapsApi() {
+            const key = document.getElementById('gmaps-api-key-input').value.trim();
+            const status = document.getElementById('api-status-msg');
+            if (!key) {
+                status.textContent = "Please enter a valid Google Maps Platform API key.";
+                status.classList.remove('hidden');
+                return;
+            }
+            status.textContent = "Loading official Google Maps JavaScript SDK...";
+            status.classList.remove('hidden');
+
+            const script = document.createElement('script');
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&callback=initOfficialGmapsSdk`;
+            script.async = true;
+            script.defer = true;
+            script.onerror = function() {
+                status.textContent = "Failed to load Google Maps JS SDK. Check your API key or restrictions.";
+            };
+            document.head.appendChild(script);
+        }
+
+        window.initOfficialGmapsSdk = function() {
+            closeApiModal();
+            document.getElementById('oahu-google-map').classList.add('hidden');
+            const gCanvas = document.getElementById('official-gmaps-canvas');
+            gCanvas.classList.remove('hidden');
+
+            const gMap = new google.maps.Map(gCanvas, {
+                center: { lat: 21.4389, lng: -157.9583 },
+                zoom: 10,
+                mapTypeId: 'roadmap'
+            });
+
+            itineraryStops.forEach(stop => {
+                new google.maps.Marker({
+                    position: { lat: stop.lat, lng: stop.lng },
+                    map: gMap,
+                    label: `D${stop.day}`,
+                    title: stop.name
+                });
+            });
+
+            foodSpots.forEach(spot => {
+                new google.maps.Marker({
+                    position: { lat: spot.lat, lng: spot.lng },
+                    map: gMap,
+                    title: `${spot.name} (${spot.category})`
+                });
+            });
+        };
+
+        window.onload = function() {
+            initMapOutlay();
+        };
+    </script>
+</body>
+</html>
